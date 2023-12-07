@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: beanbi-backend
+  # 默认 dev 环境
+  profiles:
+    active: local
+
+
