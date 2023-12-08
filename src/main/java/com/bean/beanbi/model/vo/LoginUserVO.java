@@ -2,13 +2,11 @@ package com.bean.beanbi.model.vo;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import lombok.Data;
 
 /**
  * 已登录用户视图（脱敏）
- *
- * 
-
  **/
 @Data
 public class LoginUserVO implements Serializable {
@@ -17,6 +15,11 @@ public class LoginUserVO implements Serializable {
      * 用户 id
      */
     private Long id;
+
+    /**
+     * 用户账号
+     */
+    private String userAccount;
 
     /**
      * 用户昵称

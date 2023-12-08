@@ -9,6 +9,7 @@ import com.bean.beanbi.model.vo.UserVO;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务
@@ -110,5 +111,13 @@ public interface UserService extends IService<User> {
      * @return
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+
+    /**
+     * 上传用户头像
+     * @param file
+     * @param request
+     * @return
+     */
+    boolean uploadFileAvatar(MultipartFile file, HttpServletRequest request);
 
 }

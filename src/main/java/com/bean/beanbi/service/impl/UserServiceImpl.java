@@ -14,9 +14,11 @@ import com.bean.beanbi.model.enums.UserRoleEnum;
 import com.bean.beanbi.model.vo.LoginUserVO;
 import com.bean.beanbi.model.vo.UserVO;
 import com.bean.beanbi.service.UserService;
+import com.bean.beanbi.utils.AvatarUploadUtil;
 import com.bean.beanbi.utils.SqlUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务实现
@@ -229,5 +232,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    /**
+     * 用户上传头像
+     * @param file
+     * @param request
+     * @return
+     */
+    @Override
+    public boolean uploadFileAvatar(MultipartFile file, HttpServletRequest request) {
+        User loginUser = getLoginUser(request);
+
+        // 更新持久层用户头像信息
+        User updateUser = new User();
+        updateUser.setId(loginUser.getId());
+        String avatar = AvatarUploadUtil.uploadFileAvatar(file);
+        updateUser.setUserAvatar(avatar);
+        boolean update = this.updateById(updateUser);
+
+        return update;
     }
 }

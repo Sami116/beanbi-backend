@@ -93,3 +93,11 @@ spark:
   apiSecret: xxx
   apiKey: xxx
 
+#阿里云对象存储
+aliyun:
+  oss:
+    file:
+      endpoint: xxx
+      keyid: xxx
+      keysecret: xxx
+      bucketname: xxx
