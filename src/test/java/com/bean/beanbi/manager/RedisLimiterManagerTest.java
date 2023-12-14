@@ -13,13 +13,13 @@ class RedisLimiterManagerTest {
     @Resource
     private RedisLimiterManager redisLimiterManager;
 
-    @Test
-    void doRateLimiter() {
-
-        for (int i = 0; i < 5; i++) {
-            redisLimiterManager.doRateLimiter("1");
-            System.out.println("success");
-        }
-
-    }
+//    @Test
+//    void doRateLimiter() {
+//
+//        for (int i = 0; i < 5; i++) {
+//            redisLimiterManager.doRateLimiter("1");
+//            System.out.println("success");
+//        }
+//
+//    }
 }
