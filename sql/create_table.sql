@@ -9,11 +9,13 @@ use beanbi;
 -- 用户表
 create table user
 (
-    id           bigint auto_increment comment 'id' primary key,
+    id           bigint auto_increment comment 'id'
+        primary key,
     userAccount  varchar(256)                           not null comment '账号',
     userPassword varchar(512)                           not null comment '密码',
     userName     varchar(256)                           null comment '用户昵称',
     userAvatar   varchar(1024)                          null comment '用户头像',
+    email        varchar(255)                           null comment '用户邮箱',
     userRole     varchar(256) default 'user'            not null comment '用户角色：user/admin',
     createTime   datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime   datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
@@ -23,6 +25,7 @@ create table user
 
 create index idx_userAccount
     on user (userAccount);
+
 
 
 -- 图表信息表

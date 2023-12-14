@@ -20,12 +20,14 @@ import com.bean.beanbi.model.vo.LoginUserVO;
 import com.bean.beanbi.model.vo.UserVO;
 import com.bean.beanbi.service.UserService;
 import java.util.List;
+import java.util.regex.Pattern;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 import com.bean.beanbi.utils.AvatarUploadUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.codehaus.jackson.map.MapperConfig;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -64,6 +66,41 @@ public class UserController {
         }
         long result = userService.userRegister(userAccount, userPassword, checkPassword);
         return ResultUtils.success(result);
+    }
+
+    @PostMapping("/email/register")
+    public BaseResponse<Long> userRegisterByEmail(@RequestBody UserRegisterRequest userRegisterRequest) {
+        if (userRegisterRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        String emailCaptcha = userRegisterRequest.getEmailCaptcha();
+        String emailNum = userRegisterRequest.getEmailNum();
+        if (StringUtils.isAnyBlank(emailNum,emailCaptcha)) {
+            log.error("邮箱或邮箱验证码不能为空！！！");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"邮箱或邮箱验证码不能为空！！！");
+        }
+        long userId = userService.userEmailRegister(emailNum, emailCaptcha);
+        return ResultUtils.success(userId);
+    }
+
+    /**
+     * 发送邮箱验证码(备案后会改为发送手机短信验证码)
+     * @param emailNum
+     * @return
+     */
+    @GetMapping("/emailCaptcha")
+    public BaseResponse<Boolean> sendCode(@RequestParam String emailNum,@RequestParam String captchaType){
+        if (StringUtils.isBlank(emailNum)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //^1[3-9]\d{9}$ 手机号正则表达式
+        //^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$    邮箱正则表达式
+        if (!Pattern.matches("[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$", emailNum)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"邮箱格式错误!");
+        }
+
+        userService.sendCode(emailNum,captchaType);
+        return ResultUtils.success(true);
     }
 
     /**

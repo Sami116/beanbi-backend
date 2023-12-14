@@ -29,6 +29,22 @@ public interface UserService extends IService<User> {
      */
     long userRegister(String userAccount, String userPassword, String checkPassword);
 
+
+    /**
+     * 使用邮箱注册(后续会改造成使用手机号注册)
+     * @param emailNum
+     * @param emailCaptcha
+     * @return
+     */
+    long userEmailRegister(String emailNum, String emailCaptcha);
+
+    /**
+     * 发送邮箱/手机验证码
+     * @param emailNum
+     * @param captchaType
+     */
+    void sendCode(String emailNum,String captchaType);
+
     /**
      * 用户登录
      *

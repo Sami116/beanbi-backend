@@ -5,12 +5,17 @@ import com.bean.beanbi.constant.MQConstant;
 import com.bean.beanbi.exception.BusinessException;
 import com.bean.beanbi.manager.AiManager;
 import com.bean.beanbi.model.entity.Chart;
+import com.bean.beanbi.model.entity.SmsMessage;
 import com.bean.beanbi.service.ChartService;
- import com.rabbitmq.client.Channel;
+import com.bean.beanbi.utils.SendEmaiMessageUtil;
+import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.mail.EmailException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +31,9 @@ public class MessageConsumer {
 
     @Resource
     private ChartService chartService;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Resource
     private AiManager aiManager;
@@ -109,5 +117,33 @@ public class MessageConsumer {
         userInput.append(csvData).append("\n");
 
         return userInput.toString();
+    }
+
+    /**
+     * 处理发送邮箱验证码的任务
+     * @param message
+     * @param channel
+     * @param deliveryTag
+     */
+    @RabbitListener(queues = {MQConstant.QUEUE_EMAIL_CODE_TASK},ackMode = "MANUAL")
+    public void sendEmailCode(SmsMessage message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) throws IOException {
+        if (message == null) {
+            // 如果消息为空，先拒绝消息
+            channel.basicNack(deliveryTag, false, false);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "消息为空");
+        }
+        log.info("监听到消息啦，内容是："+ message);
+        SendEmaiMessageUtil sendEmaiMessageUtil = new SendEmaiMessageUtil();
+        String targetEmail = message.getEmail();
+        try {
+            sendEmaiMessageUtil.sendMessage(targetEmail, stringRedisTemplate);
+        } catch (EmailException e) {
+            // 如果验证码发送失败，拒绝消息
+            channel.basicNack(deliveryTag, false, false);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR,"验证码发送失败");
+        }
+        // 任务执行完成后确认该消息
+        channel.basicAck(deliveryTag,false);
+
     }
 }

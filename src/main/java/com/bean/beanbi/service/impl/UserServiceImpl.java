@@ -1,5 +1,6 @@
 package com.bean.beanbi.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,10 +10,12 @@ import com.bean.beanbi.common.ErrorCode;
 import com.bean.beanbi.constant.CommonConstant;
 import com.bean.beanbi.mapper.UserMapper;
 import com.bean.beanbi.model.dto.user.UserQueryRequest;
+import com.bean.beanbi.model.entity.SmsMessage;
 import com.bean.beanbi.model.entity.User;
 import com.bean.beanbi.model.enums.UserRoleEnum;
 import com.bean.beanbi.model.vo.LoginUserVO;
 import com.bean.beanbi.model.vo.UserVO;
+import com.bean.beanbi.mq.MessageProducer;
 import com.bean.beanbi.service.UserService;
 import com.bean.beanbi.utils.AvatarUploadUtil;
 import com.bean.beanbi.utils.SqlUtils;
@@ -20,11 +23,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,7 +45,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * 盐值，混淆密码
      */
-    private static final String SALT = "yupi";
+    private static final String SALT = "sami";
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private MessageProducer messageProducer;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -78,6 +89,61 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
             return user.getId();
         }
+    }
+
+    @Override
+    public long userEmailRegister(String emailNum, String emailCaptcha) {
+        // 验证用户输入的验证码是否正确
+        String code = stringRedisTemplate.opsForValue().get(CommonConstant.EMAIL_REGISTER_CODE + emailNum);
+        if (StringUtils.isBlank(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式或邮箱验证码错误!!!");
+        }
+        if (!emailCaptcha.equals(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误!!!");
+        }
+        // 检验用户输入的邮箱是否已经注册过
+        synchronized (emailNum.intern()) {
+            QueryWrapper queryWrapper = new QueryWrapper();
+            queryWrapper.eq("email",emailNum);
+            Long count = this.baseMapper.selectCount(queryWrapper);
+            if (count > 0) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱已经注册过了！！");
+            }
+            // 生成一个初始密码
+            String initialPassword = DigestUtils.md5DigestAsHex((SALT + emailNum).getBytes());
+
+            // 插入数据
+            User user = new User();
+            user.setUserName(emailNum);
+            user.setEmail(emailNum);
+            user.setUserPassword(initialPassword);
+            user.setUserAccount(emailNum);
+            boolean save = this.save(user);
+            if (!save) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
+            }
+
+            return user.getId();
+        }
+
+    }
+
+    /**
+     * 发送邮箱/手机验证码
+     * @param emailNum
+     * @param captchaType
+     */
+    @Override
+    public void sendCode(String emailNum, String captchaType) {
+        if (StringUtils.isBlank(captchaType)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码类型为空");
+        }
+        // todo 限流
+        //符合限流规则则生成手机短信
+        String code = RandomUtil.randomNumbers(4);
+        SmsMessage smsMessage = new SmsMessage(emailNum, code);
+        //消息队列异步发送邮箱（短信）验证码，提高短信的吞吐量
+        messageProducer.sendMessage(smsMessage);
     }
 
     @Override

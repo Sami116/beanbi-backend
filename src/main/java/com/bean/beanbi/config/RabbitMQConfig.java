@@ -35,4 +35,24 @@ public class RabbitMQConfig {
         return new Binding(MQConstant.QUEUE_ASYNC_TASK, Binding.DestinationType.QUEUE, MQConstant.EXCHANGE_ASYNC_TASK,
                 MQConstant.ROUTING_KEY_ASYNC_TASK, null);
     }
+
+
+    // 声明转发邮箱验证码任务的交换机
+    @Bean
+    public Exchange emailCodeTaskExchange() {
+        return new DirectExchange(MQConstant.EXCHANGE_EMAIL_CODE_TASK,true,false);
+    }
+
+    // 声明邮箱验证码任务消息队列
+    @Bean
+    public Queue emailCodeTaskQueue() {
+        return new Queue(MQConstant.QUEUE_EMAIL_CODE_TASK, true, false, false);
+    }
+
+    // 绑定交换机与队列
+    @Bean
+    public Binding bindingEmailCodeTaskQueue() {
+        return new Binding(MQConstant.QUEUE_EMAIL_CODE_TASK, Binding.DestinationType.QUEUE, MQConstant.EXCHANGE_EMAIL_CODE_TASK,
+                MQConstant.ROUTING_KEY_EMAIL_CODE_TASK, null);
+    }
 }

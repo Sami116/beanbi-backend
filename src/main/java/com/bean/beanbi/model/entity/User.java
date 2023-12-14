@@ -4,13 +4,15 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.util.Date;
+
 import lombok.Data;
 
 /**
  * 用户
+ *
  * @TableName user
  */
-@TableName(value ="user")
+@TableName(value = "user")
 @Data
 public class User implements Serializable {
     /**
@@ -38,6 +40,11 @@ public class User implements Serializable {
      * 用户头像
      */
     private String userAvatar;
+
+    /**
+     * 用户邮箱
+     */
+    private String email;
 
     /**
      * 用户角色：user/admin
