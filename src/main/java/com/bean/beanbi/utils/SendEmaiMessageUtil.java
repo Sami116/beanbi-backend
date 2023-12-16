@@ -45,9 +45,9 @@ public class SendEmaiMessageUtil {
 
             String code = RandomUtil.getFourBitRandom();
             //设置数据的5分钟有效期限
-            redisTemplate.opsForValue().set(CommonConstant.EMAIL_REGISTER_CODE + targetEmail, code, 5, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(CommonConstant.EMAIL_CODE + targetEmail, code, 5, TimeUnit.MINUTES);
             // 设置邮件内容
-            mail.setMsg("您的注册 or 登录 验证码为：" + code + ",验证码5分钟内有效!!!" + "[Bean API]");
+            mail.setMsg("您的注册 or 登录 验证码为：" + code + ",验证码5分钟内有效!!!" + "[Bean BI]");
             // 设置邮件发送时间
             mail.setSentDate(new Date());
             // 发送邮件

@@ -19,6 +19,7 @@ import com.bean.beanbi.model.entity.User;
 import com.bean.beanbi.model.vo.LoginUserVO;
 import com.bean.beanbi.model.vo.UserVO;
 import com.bean.beanbi.service.UserService;
+
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Resource;
@@ -34,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户接口
- *
  */
 @RestController
 @RequestMapping("/user")
@@ -75,9 +75,9 @@ public class UserController {
         }
         String emailCaptcha = userRegisterRequest.getEmailCaptcha();
         String emailNum = userRegisterRequest.getEmailNum();
-        if (StringUtils.isAnyBlank(emailNum,emailCaptcha)) {
+        if (StringUtils.isAnyBlank(emailNum, emailCaptcha)) {
             log.error("邮箱或邮箱验证码不能为空！！！");
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"邮箱或邮箱验证码不能为空！！！");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱或邮箱验证码不能为空！！！");
         }
         long userId = userService.userEmailRegister(emailNum, emailCaptcha);
         return ResultUtils.success(userId);
@@ -85,21 +85,22 @@ public class UserController {
 
     /**
      * 发送邮箱验证码(备案后会改为发送手机短信验证码)
+     *
      * @param emailNum
      * @return
      */
     @GetMapping("/emailCaptcha")
-    public BaseResponse<Boolean> sendCode(@RequestParam String emailNum,@RequestParam String captchaType){
-        if (StringUtils.isBlank(emailNum)){
+    public BaseResponse<Boolean> sendCode(@RequestParam String emailNum, @RequestParam String captchaType) {
+        if (StringUtils.isBlank(emailNum)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         //^1[3-9]\d{9}$ 手机号正则表达式
         //^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$    邮箱正则表达式
         if (!Pattern.matches("[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$", emailNum)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"邮箱格式错误!");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式错误!");
         }
 
-        userService.sendCode(emailNum,captchaType);
+        userService.sendCode(emailNum, captchaType);
         return ResultUtils.success(true);
     }
 
@@ -124,6 +125,19 @@ public class UserController {
         return ResultUtils.success(loginUserVO);
     }
 
+    @PostMapping("/loginByEmail")
+    public BaseResponse<LoginUserVO> userLoginByEmail(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+        if (userLoginRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        String emailNum = userLoginRequest.getEmailNum();
+        String emailCaptcha = userLoginRequest.getEmailCaptcha();
+        if (StringUtils.isAnyBlank(emailCaptcha, emailNum)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        LoginUserVO loginUserVO = userService.userLoginByEmail(emailNum, emailCaptcha, request);
+        return ResultUtils.success(loginUserVO);
+    }
 
     /**
      * 用户注销
@@ -202,7 +216,7 @@ public class UserController {
      */
     @PostMapping("/update")
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
-            HttpServletRequest request) {
+                                            HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -226,7 +240,7 @@ public class UserController {
         if (!AvatarUploadUtil.validate(file)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        boolean result = userService.uploadFileAvatar(file,request);
+        boolean result = userService.uploadFileAvatar(file, request);
         return ResultUtils.success(result);
     }
 
@@ -272,7 +286,7 @@ public class UserController {
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
-            HttpServletRequest request) {
+                                                   HttpServletRequest request) {
         long current = userQueryRequest.getCurrent();
         long size = userQueryRequest.getPageSize();
         Page<User> userPage = userService.page(new Page<>(current, size),
@@ -289,7 +303,7 @@ public class UserController {
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest userQueryRequest,
-            HttpServletRequest request) {
+                                                       HttpServletRequest request) {
         if (userQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -316,7 +330,7 @@ public class UserController {
      */
     @PostMapping("/update/my")
     public BaseResponse<Boolean> updateMyUser(@RequestBody UserUpdateMyRequest userUpdateMyRequest,
-            HttpServletRequest request) {
+                                              HttpServletRequest request) {
         if (userUpdateMyRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }

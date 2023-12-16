@@ -21,12 +21,13 @@ import com.bean.beanbi.utils.AvatarUploadUtil;
 import com.bean.beanbi.utils.SqlUtils;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
 import lombok.extern.slf4j.Slf4j;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -94,7 +95,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public long userEmailRegister(String emailNum, String emailCaptcha) {
         // 验证用户输入的验证码是否正确
-        String code = stringRedisTemplate.opsForValue().get(CommonConstant.EMAIL_REGISTER_CODE + emailNum);
+        String code = stringRedisTemplate.opsForValue().get(CommonConstant.EMAIL_CODE + emailNum);
         if (StringUtils.isBlank(code)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式或邮箱验证码错误!!!");
         }
@@ -174,7 +175,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
+    /**
+     * 使用邮箱登录(后续会改造成使用手机号登录)
+     * @param emailNum
+     * @param emailCode
+     * @param request
+     * @return
+     */
+    @Override
+    public LoginUserVO userLoginByEmail(String emailNum, String emailCode, HttpServletRequest request) {
+        String code = stringRedisTemplate.opsForValue().get(CommonConstant.EMAIL_CODE + emailNum);
+        if (StringUtils.isBlank(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱格式或邮箱验证码错误!!!");
+        }
+        if (!emailCode.equals(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误!!!");
+        }
+        // 验证该邮箱是否已经注册
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.eq("email",emailNum);
+        User user = this.baseMapper.selectOne(userQueryWrapper);
 
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR,"用户不存在，请先注册！");
+        }
+        // 记录用户的登录态
+        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE,user);
+
+        return this.getLoginUserVO(user);
+    }
 
 
     /**

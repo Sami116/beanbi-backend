@@ -8,6 +8,8 @@ import com.bean.beanbi.model.vo.LoginUserVO;
 import com.bean.beanbi.model.vo.UserVO;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -55,7 +57,14 @@ public interface UserService extends IService<User> {
      */
     LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
-
+    /**
+     * 使用邮箱登录(后续会改造成使用手机号登录)
+     * @param emailNum
+     * @param emailCode
+     * @param request
+     * @return
+     */
+    LoginUserVO userLoginByEmail(String emailNum, String emailCode, HttpServletRequest request);
 
     /**
      * 获取当前登录用户

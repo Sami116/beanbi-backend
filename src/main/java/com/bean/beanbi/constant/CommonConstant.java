@@ -19,6 +19,6 @@ public interface CommonConstant {
     String SORT_ORDER_DESC = " descend";
 
     //邮箱注册验证码 key
-    String EMAIL_REGISTER_CODE = "beanbi::email::register::";
+    String EMAIL_CODE = "beanbi::email::code::";
 
 }
